@@ -103,11 +103,18 @@ class CompileSourceTestCase(TestCase):
     def test_compile_with_no_input_name(self):
         with NamedTemporaryFile(suffix='.pb') as model_file:
             _save_frozen_graph_model(model_file)
-            config = Config.from_json({'input_names': None,
-                                       'output_names': ['z'],
+            config = Config.from_json({'output_names': ['z'],
                                        'max_batch_size': 1})
             compiled = compiler.compile_source(FrozenGraphFile(model_path=model_file.name), config)
         self.assertEqual(compiled.inputs, None)
+
+    def test_compile_with_no_output_name(self):
+        with NamedTemporaryFile(suffix='.pb') as model_file:
+            _save_frozen_graph_model(model_file)
+            config = Config.from_json({'input_names': ['x', 'y'],
+                                       'max_batch_size': 1})
+            compiled = compiler.compile_source(FrozenGraphFile(model_path=model_file.name), config)
+        self.assertEqual(compiled.outputs, None)
 
     def test_compile_with_no_input_formats(self):
         with NamedTemporaryFile(suffix='.pb') as model_file:
@@ -125,7 +132,6 @@ class CompileSourceTestCase(TestCase):
             _save_frozen_graph_model(model_file)
             config = Config.from_json({'input_names': ['x', 'y'],
                                        'output_names': ['z'],
-                                       'input_formats': [None, None],
                                        'max_batch_size': 4})
             compiled = compiler.compile_source(FrozenGraphFile(model_path=model_file.name), config)
         self.assertEqual([model_input.format for model_input in compiled.inputs],
