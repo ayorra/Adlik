@@ -11,8 +11,9 @@ from os import path
 from subprocess import Popen
 from tempfile import TemporaryDirectory
 
-_BASE_URL = 'https://developer.download.nvidia.com/compute/machine-learning/repos'
-_PACKAGE = 'python3-libnvinfer_7.1.3-1'
+_BASE_URL = 'http://10.86.64.5/public/file-archive/internet-mirror/https/developer.download.nvidia.com' \
+            '/compute/machine-learning/repos'
+_PACKAGE = 'python3-libnvinfer_7.0.0-1'
 
 _TENSORRT_SOURCES = {
     (3, 5): 'ubuntu1604',
