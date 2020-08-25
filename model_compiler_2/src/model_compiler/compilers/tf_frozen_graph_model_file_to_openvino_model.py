@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import tensorflow as tf
 
 from . import repository
-from ..models.data_format import as_model_config_data_format, DataFormat
+from ..models.data_format import as_model_config_data_format
 from ..models.sources.tf_frozen_graph_file import FrozenGraphFile
 from ..models.targets.openvino_model import OpenvinoModel
 from ..openvino_util import Config, execute_optimize_action
@@ -20,12 +20,7 @@ def _get_inputs(graph, config):
     inputs = []
     for name, data_format in config.input_info:
         tensor = get_tensor_by_fuzzy_name(graph, name)
-        # OpenVINO only support NCHW, so should transpose shape if data_format is 'channels_last'
         dims = [-1 if dim is None else dim for dim in tensor.shape[1:]]
-        if data_format == DataFormat.CHANNELS_LAST:
-            data_format = DataFormat.CHANNELS_FIRST
-            channel = dims.pop(-1)
-            dims.insert(0, channel)
         inputs.append(ModelInput(name=name,
                                  data_type=tensor.dtype.as_datatype_enum,
                                  format=as_model_config_data_format(data_format),
@@ -50,7 +45,8 @@ def _get_optimize_params(input_model, output_dir, max_batch_size, inputs, output
               'model_name': 'model',
               'input_model': input_model,
               'output_dir': output_dir,
-              'batch': str(max_batch_size)}
+              'batch': str(max_batch_size),
+              'disable_nhwc_to_nchw': ''}
     if inputs is not None:
         params['input'] = ','.join(i.name for i in inputs)
     if outputs is not None:

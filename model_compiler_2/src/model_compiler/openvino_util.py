@@ -21,7 +21,7 @@ def _get_input_info(input_names, str_formats):
 
 
 class Config(NamedTuple):
-    input_info: Optional[Sequence[Tuple[Optional[str], Optional[DataFormat]]]]
+    input_info: Optional[Sequence[Tuple[str, Optional[DataFormat]]]]
     output_names: Optional[Sequence[str]]
     max_batch_size: int
 
@@ -67,7 +67,7 @@ def execute_optimize_action(params: Dict[str, str]):
 def _args_dict_to_list(params: Dict[str, str]) -> List[str]:
     args = [sys.executable, _acquire_optimizer_script_dir(params.pop('script_name'))]
     for key, value in params.items():
-        args.extend(['--' + key, value])
+        args.extend(['--' + key] if value == '' else ['--' + key, value])
     return args
 
 

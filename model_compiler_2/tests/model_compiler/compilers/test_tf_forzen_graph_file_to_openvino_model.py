@@ -90,7 +90,7 @@ class CompileSourceTestCase(TestCase):
 
         self.assertEqual([model_input.name for model_input in compiled.inputs], ['x', 'y'])
         self.assertEqual([model_input.format for model_input in compiled.inputs],
-                         [ModelInput.FORMAT_NCHW, ModelInput.FORMAT_NCHW])  # pylint: disable=no-member
+                         [ModelInput.FORMAT_NHWC, ModelInput.FORMAT_NHWC])  # pylint: disable=no-member
         self.assertEqual([model_output.name for model_output in compiled.outputs], ['z'])
 
     def test_compile_with_variables_input_name_format_different_length(self):
