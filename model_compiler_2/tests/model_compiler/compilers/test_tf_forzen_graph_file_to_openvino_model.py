@@ -13,7 +13,7 @@ from model_compiler.models.sources.tf_frozen_graph_file import FrozenGraphFile
 
 
 class ConfigTestCase(TestCase):
-    def test_from_json(self):
+    def test_from_json_implicit_disable_transform(self):
         self.assertEqual(Config.from_json({'input_names': ['input'],
                                            'input_formats': ['channels_first'],
                                            'output_names': ['output'],
@@ -21,6 +21,35 @@ class ConfigTestCase(TestCase):
                          Config(input_info=[('input', DataFormat.CHANNELS_FIRST)],
                                 output_names=['output'],
                                 max_batch_size=1))
+
+    def test_from_json_enable_transform(self):
+        self.assertEqual(Config.from_json({'input_names': ['input'],
+                                           'input_formats': ['channels_first'],
+                                           'output_names': ['output'],
+                                           'max_batch_size': 1,
+                                           'enable_transform': True}),
+                         Config(input_info=[('input', DataFormat.CHANNELS_FIRST)],
+                                output_names=['output'],
+                                max_batch_size=1,
+                                enable_transform=True))
+
+    def test_from_json_disable_transform(self):
+        self.assertEqual(Config.from_json({'input_names': ['input'],
+                                           'input_formats': ['channels_first'],
+                                           'output_names': ['output'],
+                                           'max_batch_size': 1,
+                                           'enable_transform': False}),
+                         Config(input_info=[('input', DataFormat.CHANNELS_FIRST)],
+                                output_names=['output'],
+                                max_batch_size=1,
+                                enable_transform=False))
+
+    def test_from_json_input_name_format_different_length(self):
+        self.assertRaises(ValueError, Config.from_json,
+                          {'input_names': ['x', 'y'],
+                           'output_names': ['z'],
+                           'input_formats': ['channels_last'],
+                           'max_batch_size': 1})
 
     def test_from_json_no_names(self):
         self.assertEqual(Config.from_json({'input_names': None,
@@ -35,7 +64,8 @@ class ConfigTestCase(TestCase):
         self.assertEqual(Config.from_env({'INPUT_NAMES': 'input1,input2:0',
                                           'OUTPUT_NAMES': 'output',
                                           'INPUT_FORMATS': 'channels_first,channels_first',
-                                          'MAX_BATCH_SIZE': '1'}),
+                                          'MAX_BATCH_SIZE': '1',
+                                          'ENABLE_TRANSFORM': 'False'}),
                          Config(input_info=[('input1', DataFormat.CHANNELS_FIRST),
                                             ('input2:0', DataFormat.CHANNELS_FIRST)],
                                 output_names=['output'],
@@ -85,7 +115,8 @@ class CompileSourceTestCase(TestCase):
             config = Config.from_json({'input_names': ['x', 'y'],
                                        'output_names': ['z'],
                                        'input_formats': ['channels_last', 'channels_last'],
-                                       'max_batch_size': 1})
+                                       'max_batch_size': 1,
+                                       'enable_transform': True})
             compiled = compiler.compile_source(FrozenGraphFile(model_path=model_file.name), config)
 
         self.assertEqual([model_input.name for model_input in compiled.inputs], ['x', 'y'])
@@ -93,12 +124,19 @@ class CompileSourceTestCase(TestCase):
                          [ModelInput.FORMAT_NCHW, ModelInput.FORMAT_NCHW])  # pylint: disable=no-member
         self.assertEqual([model_output.name for model_output in compiled.outputs], ['z'])
 
-    def test_compile_with_variables_input_name_format_different_length(self):
-        self.assertRaises(ValueError, Config.from_json,
-                          {'input_names': ['x', 'y'],
-                           'output_names': ['z'],
-                           'input_formats': ['channels_last'],
-                           'max_batch_size': 1})
+    def test_compile_with_variables_channel_first(self):
+        with NamedTemporaryFile(suffix='.pb') as model_file:
+            _save_frozen_graph_model(model_file)
+            config = Config.from_json({'input_names': ['x', 'y'],
+                                       'output_names': ['z'],
+                                       'input_formats': ['channels_first', 'channels_first'],
+                                       'max_batch_size': 1})
+            compiled = compiler.compile_source(FrozenGraphFile(model_path=model_file.name), config)
+
+        self.assertEqual([model_input.name for model_input in compiled.inputs], ['x', 'y'])
+        self.assertEqual([model_input.format for model_input in compiled.inputs],
+                         [ModelInput.FORMAT_NCHW, ModelInput.FORMAT_NCHW])  # pylint: disable=no-member
+        self.assertEqual([model_output.name for model_output in compiled.outputs], ['z'])
 
     def test_compile_with_no_input_name(self):
         with NamedTemporaryFile(suffix='.pb') as model_file:

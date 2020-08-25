@@ -33,3 +33,16 @@ class StrToDataFormatTestCase(TestCase):
 
     def test_channels_none_str(self):
         self.assertIsNone(data_format.str_to_data_format(None))
+
+
+class ReverseDataFormatTestCase(TestCase):
+    def test_channels_first_reverse(self):
+        self.assertEqual(data_format.reverse_data_format(DataFormat.CHANNELS_FIRST),
+                         DataFormat.CHANNELS_LAST)
+
+    def test_channels_last_reverse(self):
+        self.assertEqual(data_format.reverse_data_format(DataFormat.CHANNELS_LAST),
+                         DataFormat.CHANNELS_FIRST)
+
+    def test_channels_none_reverse(self):
+        self.assertIsNone(data_format.reverse_data_format(None))

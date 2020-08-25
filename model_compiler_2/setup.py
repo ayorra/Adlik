@@ -55,9 +55,7 @@ setuptools.setup(
         'networkx',
         'tensorflow',
         'test-generator==0.1.1',
-        'tf2onnx',
-        'torch',
-        'onnx'
+        'tf2onnx'
     ],
     entry_points={'console_scripts': ['model-compiler=model_compiler.main:main']},
     extras_require={
@@ -67,7 +65,8 @@ setuptools.setup(
             'mypy',
             'pylint',
             'pytest-cov',
-            'pytest-xdist'
+            'pytest-xdist',
+            'torch'
         ]
     },
     python_requires='>= 3.6'

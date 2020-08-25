@@ -24,6 +24,17 @@ def as_model_config_data_format(data_format: Optional[DataFormat]):
     return result
 
 
+def reverse_data_format(data_format: Optional[DataFormat]):
+    if data_format is None:
+        result = None
+    elif data_format == DataFormat.CHANNELS_FIRST:
+        result = DataFormat.CHANNELS_LAST
+    else:
+        result = DataFormat.CHANNELS_FIRST
+
+    return result
+
+
 def str_to_data_format(input_str: Optional[str]) -> Optional[DataFormat]:
     if input_str == 'channels_first':
         return DataFormat.CHANNELS_FIRST

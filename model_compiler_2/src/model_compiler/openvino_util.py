@@ -1,6 +1,7 @@
 # Copyright 2019 ZTE corporation. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import ast
 import os
 import subprocess  # nosec
 import sys
@@ -21,9 +22,10 @@ def _get_input_info(input_names, str_formats):
 
 
 class Config(NamedTuple):
-    input_info: Optional[Sequence[Tuple[Optional[str], Optional[DataFormat]]]]
+    input_info: Optional[Sequence[Tuple[str, Optional[DataFormat]]]]
     output_names: Optional[Sequence[str]]
     max_batch_size: int
+    enable_transform: bool = False
 
     @staticmethod
     def from_json(value: Mapping[str, Any]) -> 'Config':
@@ -36,20 +38,24 @@ class Config(NamedTuple):
         # Example: 'node_name1,node_name2'
         output_names = value.get('output_names')
         max_batch_size = value.get('max_batch_size', 1)
+        enable_transform = value.get('enable_transform', False)
         input_info = _get_input_info(input_names, input_formats)
         return Config(input_info=input_info,
                       output_names=output_names,
-                      max_batch_size=max_batch_size)
+                      max_batch_size=max_batch_size,
+                      enable_transform=enable_transform)
 
     @staticmethod
     def from_env(env: Mapping[str, Any]) -> 'Config':
         input_names = split_by(env.get('INPUT_NAMES'), ',')
         input_formats = split_by(env.get('INPUT_FORMATS'), ',')
         output_names = split_by(env.get('OUTPUT_NAMES'), ',')
-        max_batch_size = env.get('MAX_BATCH_SIZE', '1')
+        max_batch_size = int(env.get('MAX_BATCH_SIZE', '1'))
+        enable_transform = ast.literal_eval(env.get('ENABLE_TRANSFORM', 'False'))
         input_info = _get_input_info(input_names, input_formats)
         return Config(input_info=input_info,
                       output_names=output_names,
+                      enable_transform=enable_transform,
                       max_batch_size=int(max_batch_size))
 
 
@@ -67,7 +73,7 @@ def execute_optimize_action(params: Dict[str, str]):
 def _args_dict_to_list(params: Dict[str, str]) -> List[str]:
     args = [sys.executable, _acquire_optimizer_script_dir(params.pop('script_name'))]
     for key, value in params.items():
-        args.extend(['--' + key, value])
+        args.extend(['--' + key] if value == '' else ['--' + key, value])
     return args
 
 
